@@ -62,7 +62,7 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
     """torchvision ResNet trunk without avgpool / fc. forward -> {"res3", "res4", "res5"}."""
 
-    def __init__(self, layers, block=Bottleneck, norm_layer=None):
+    def __init__(self, layers, block=Bottleneck, norm_layer=None, dilate_last=False):
         super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -78,17 +78,21 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dilate=dilate_last)   # DC5 when True
         self.out_channels = {"res3": 128 * block.expansion, "res4": 256 * block.expansion,
                              "res5": 512 * block.expansion}
 
-    def _make_layer(self, block, planes, blocks, stride=1):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
         norm_layer = self._norm_layer
         downsample = None
+        previous_dilation = self.dilation
+        if dilate:                                   # torchvision ResNet._make_layer
+            self.dilation *= stride
+            stride = 1
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(conv1x1(self.inplanes, planes * block.expansion, stride),
                                        norm_layer(planes * block.expansion))
-        layers = [block(self.inplanes, planes, stride, downsample, self.groups, self.base_width, self.dilation,
+        layers = [block(self.inplanes, planes, stride, downsample, self.groups, self.base_width, previous_dilation,
                         norm_layer)]
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
@@ -105,5 +109,5 @@ class ResNet(nn.Module):
         return {"res3": c3, "res4": c4, "res5": c5}
 
 
-def build_resnet(depth=50):
-    return ResNet(RESNET_DEPTH[depth])
+def build_resnet(depth=50, dilate_last=False):
+    return ResNet(RESNET_DEPTH[depth], dilate_last=dilate_last)

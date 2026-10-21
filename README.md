@@ -30,17 +30,19 @@ EMNIST is downloaded from NIST; if the download is refused, fetch `gzip.zip` in 
 
 ## Results
 
-Test set: FashionLetters36 test (1,024 images, 36 classes), IoU 0.5, after 30 epochs (2.7 h on an RTX 4070 Laptop GPU).
+> **v1.1 (2026-10-22)** - The v1.0 results and weights covered only the 10 Fashion-MNIST classes: a class-name case bug (`"F"` was looked up as `"f"`) dropped the 26 letter classes from training and evaluation (4,848 of the 6,699 test objects). v1.1 fixes `common/datasets/voc.py` and reports a re-training on all 36 classes. The v1.0 Release is kept for reference.
+
+Test set: FashionLetters36 test (1,024 images, 36 classes), IoU 0.5, after 30 epochs (2.3 h on an RTX 4070 Laptop GPU).
 
 | mAP50 | Recall | Final train loss | Train class accuracy |
 | --- | --- | --- | --- |
-| **0.8763** | 0.948 | 0.209 | 81.9 % |
+| **0.9081** | 0.945 | 0.159 | 87.1 % |
 
 Convergence (test mAP50):
 
 | Epoch | 5 | 10 | 15 | 20 | 25 | 30 |
 | --- | --- | --- | --- | --- | --- | --- |
-| mAP50 | 0.687 | 0.754 | 0.842 | 0.849 | 0.878 | 0.876 |
+| mAP50 | 0.803 | 0.870 | 0.893 | 0.897 | 0.912 | 0.908 |
 
 Protocol: 30 epochs, Adam lr 1e-4 (constant), effective batch 8 (micro batch 2 x 4 accumulation), input 608, seed 777, no pretraining; augmentation: horizontal flip + the basic YOLO-paper augmentation (random scale / translation 20 %, HSV hue 0.1, saturation / exposure 1.5); test mAP50 every 5 epochs.
 
